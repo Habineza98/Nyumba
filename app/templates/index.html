@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans antialiased min-h-screen">
+
+    <!-- Top Navigation Bar -->
+    <nav class="border-b border-slate-800 bg-slate-900/60 backdrop-blur-md sticky top-0 z-50 px-6 py-4">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            
+            <!-- Logo & Title -->
+            <a href="/" class="flex items-center gap-3">
+                <div class="h-9 w-9 rounded-xl bg-blue-600 flex items-center justify-center font-bold text-white text-lg shadow-lg shadow-blue-600/30">N</div>
+                <span class="text-xl font-bold tracking-tight text-white">Nyumba SaaS</span>
+            </a>
+
+            <!-- User Menu & Logout Button -->
+            <div class="flex items-center gap-4">
+                {% if current_user %}
+                <div class="hidden sm:flex items-center gap-2 text-xs text-slate-400 bg-slate-800/60 px-3 py-1.5 rounded-lg border border-slate-700/50">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                    <span class="font-medium text-slate-200">{{ current_user.email or current_user.phone_number or current_user.username }}</span>
+                </div>
+                
+                <a href="/logout" 
+                   class="inline-flex items-center gap-2 bg-slate-800 hover:bg-red-950/50 text-slate-300 hover:text-red-400 border border-slate-700 hover:border-red-800/50 text-xs font-semibold px-4 py-2 rounded-lg transition">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    </svg>
+                    Logout
+                </a>
+                {% else %}
+                <a href="/signin" class="text-xs text-blue-400 hover:underline font-medium">Sign In</a>
+                {% endif %}
+            </div>
+
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <main class="max-w-7xl mx-auto p-6 space-y-8">
+
+        <!-- Header Banner -->
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800/80 pb-6">
+            <div>
+                <h1 class="text-2xl font-bold text-white">Portfolio Overview</h1>
+                <p class="text-xs text-slate-400 mt-1">Real-time status of properties, rental income, and tenants.</p>
+            </div>
+            
+            <button onclick="document.getElementById('add-property-modal').classList.remove('hidden')"
+                class="bg-blue-600 hover:bg-blue-500 text-white font-medium text-xs px-4 py-2.5 rounded-lg shadow-lg shadow-blue-600/20 transition flex items-center gap-2 w-fit">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                </svg>
+                Add Property
+            </button>
+        </div>
+
+        <!-- Metric Cards Grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            
+            <!-- Total Rent Potential -->
+            <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-lg">
+                <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Potential Income</p>
+                <div class="mt-2 flex items-baseline justify-between">
+                    <p class="text-2xl font-bold text-white">{{ total_rent | currency }} <span class="text-xs text-slate-400 font-normal">RWF</span></p>
+                </div>
+            </div>
+
+            <!-- Collected Rent -->
+            <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-lg">
+                <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Rent Collected</p>
+                <div class="mt-2 flex items-baseline justify-between">
+                    <p class="text-2xl font-bold text-emerald-400">{{ total_rent_collected | currency }} <span class="text-xs text-slate-400 font-normal">RWF</span></p>
+                    <span class="text-xs font-semibold text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-800/50">{{ collection_rate }}%</span>
+                </div>
+            </div>
+
+            <!-- Total Units -->
+            <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-lg">
+                <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Total Units</p>
+                <div class="mt-2 flex items-baseline justify-between">
+                    <p class="text-2xl font-bold text-white">{{ total_units }}</p>
+                    <span class="text-xs text-slate-400">{{ tenants | length }} Occupied</span>
+                </div>
+            </div>
+
+            <!-- Open Payment Tickets -->
+            <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-lg">
+                <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Pending / Late</p>
+                <div class="mt-2 flex items-baseline justify-between">
+                    <p class="text-2xl font-bold text-amber-400">{{ total_open_tickets }}</p>
+                    <span class="text-xs text-amber-400 bg-amber-950/60 px-2 py-0.5 rounded border border-amber-800/50">Action Needed</span>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Properties Grid -->
+        <div class="space-y-4">
+            <h2 class="text-lg font-bold text-white">Active Properties</h2>
+
+            {% if properties %}
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {% for prop in properties %}
+                <div class="bg-slate-900 border border-slate-800 rounded-xl p-6 flex flex-col justify-between hover:border-slate-700 transition shadow-lg">
+                    <div>
+                        <div class="flex items-start justify-between gap-2">
+                            <h3 class="text-base font-bold text-white">{{ prop.name }}</h3>
+                            <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-slate-800 text-slate-300 border border-slate-700">
+                                {{ prop.units | length }} Units
+                            </span>
+                        </div>
+                        <p class="text-xs text-slate-400 mt-1 flex items-center gap-1">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                            {{ prop.location or 'No location set' }}
+                        </p>
+                    </div>
+
+                    <div class="mt-6 pt-4 border-t border-slate-800/80 flex items-center justify-between">
+                        <a href="/property/{{ prop.id }}" class="text-xs font-semibold text-blue-400 hover:text-blue-300 transition flex items-center gap-1">
+                            Manage Property →
+                        </a>
+
+                        <form action="/soft-delete-property/{{ prop.id }}" method="POST" onsubmit="return confirm('Archive this property?')">
+                            <button type="submit" class="text-xs text-slate-400 hover:text-red-400 transition">
+                                Archive
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="bg-slate-900/50 border border-slate-800/80 rounded-xl p-8 text-center">
+                <p class="text-sm text-slate-400">No active properties found. Click "Add Property" to create one.</p>
+            </div>
+            {% endif %}
+        </div>
+
+    </main>
+
+    <!-- Add Property Modal -->
+    <div id="add-property-modal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 w-full max-w-md shadow-2xl">
+            <h3 class="text-lg font-bold text-white mb-4">Add New Property</h3>
+            <form action="/add-property" method="POST" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Property Name</label>
+                    <input type="text" name="name" required placeholder="e.g. Vision City Apartments"
+                        class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Location</label>
+                    <input type="text" name="location" required placeholder="e.g. Gacuriro, Kigali"
+                        class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500">
+                </div>
+                <div class="flex items-center justify-end gap-3 pt-2">
+                    <button type="button" onclick="document.getElementById('add-property-modal').classList.add('hidden')"
+                        class="px-4 py-2 text-xs font-medium text-slate-400 hover:text-white transition">Cancel</button>
+                    <button type="submit"
+                        class="bg-blue-600 hover:bg-blue-500 text-white font-medium text-xs px-4 py-2 rounded-lg shadow-md transition">Save Property</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</body>
+</html>

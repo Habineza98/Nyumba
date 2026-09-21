@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Nyumba SaaS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans antialiased min-h-screen flex flex-col">
+
+    <!-- Top Navigation Bar -->
+    <nav class="border-b border-slate-800/80 bg-slate-950/80 backdrop-blur-md sticky top-0 z-50 px-6 py-4">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <a href="/" class="flex items-center gap-3">
+                <div class="h-9 w-9 rounded-xl bg-blue-600 flex items-center justify-center font-bold text-white text-lg shadow-lg shadow-blue-600/30">N</div>
+                <span class="text-xl font-bold tracking-tight text-white">Nyumba SaaS</span>
+            </a>
+
+            <div class="flex items-center gap-4">
+                <div class="flex items-center gap-2">
+                    <div class="h-8 w-8 rounded-full bg-blue-600 flex items-center justify-center text-xs font-bold text-white uppercase shadow-md shadow-blue-600/30">
+                        {{ user.full_name[0] if user and user.full_name else 'U' }}
+                    </div>
+                    <span class="text-xs font-semibold text-white">{{ user.full_name if user else 'User' }}</span>
+                </div>
+                <a href="/logout" class="text-xs font-semibold text-slate-400 hover:text-white transition px-3 py-2">
+                    Logout
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-6 py-8 w-full flex-grow">
+        
+        <!-- Metrics Section -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-6">
+                <p class="text-xs font-semibold text-slate-400 tracking-wider uppercase mb-1">Total Properties</p>
+                <h3 class="text-3xl font-extrabold text-blue-500">{{ total_properties }}</h3>
+            </div>
+
+            <div class="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-6">
+                <p class="text-xs font-semibold text-slate-400 tracking-wider uppercase mb-1">Active Tenants</p>
+                <h3 class="text-3xl font-extrabold text-blue-500">{{ total_tenants }}</h3>
+            </div>
+
+            <div class="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-6">
+                <p class="text-xs font-semibold text-slate-400 tracking-wider uppercase mb-1">Monthly Revenue</p>
+                <h3 class="text-3xl font-extrabold text-blue-500">{{ "%.2f"|format(monthly_revenue) }} RWF</h3>
+            </div>
+        </div>
+
+        <!-- Add Property Section -->
+        <div class="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-6 mb-8">
+            <h2 class="text-lg font-bold text-white mb-4">Add Property</h2>
+            
+            <form action="/properties/add" method="POST" class="space-y-4">
+                <input type="text" name="name" required placeholder="Property Name (e.g. Rubangura House)" class="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-600 transition">
+                <input type="text" name="address" required placeholder="Address / Location (e.g. Nyarugenge, Kigali)" class="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-600 transition">
+                
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm py-3 rounded-xl shadow-lg shadow-blue-600/20 transition">
+                    Add Property
+                </button>
+            </form>
+        </div>
+
+        <!-- Properties List Section -->
+        <div class="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-6">
+            <h3 class="text-base font-semibold text-white mb-4">Your Properties (Click to manage)</h3>
+
+            <div class="space-y-3">
+                {% for prop in properties %}
+                    <div class="bg-slate-950/80 border border-slate-800/80 hover:border-slate-700 rounded-xl p-4 flex items-center justify-between transition">
+                        <!-- Left Side: Property Link -->
+                        <a href="/property/{{ prop.id }}" class="flex-1 flex items-center justify-between pr-4 group">
+                            <span class="font-medium text-slate-200 group-hover:text-blue-400 transition">{{ prop.name }}</span>
+                            <span class="text-xs text-slate-400 group-hover:text-slate-300 transition">{{ prop.address }} &rarr;</span>
+                        </a>
+
+                        <!-- Right Side: Action Buttons -->
+                        <div class="flex items-center gap-2 border-l border-slate-800/80 pl-4">
+                            <!-- Edit / Rename Button -->
+                            <button onclick="openEditPropertyModal('{{ prop.id }}', '{{ prop.name }}', '{{ prop.address }}')" class="text-xs text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg transition">
+                                Edit
+                            </button>
+
+                            <!-- Delete Button -->
+                            <form action="/property/{{ prop.id }}/delete" method="POST" onsubmit="return confirm('Are you sure you want to delete {{ prop.name }}? This will also remove all its units.');">
+                                <button type="submit" class="text-xs text-red-400 hover:text-red-300 bg-red-950/40 hover:bg-red-900/50 border border-red-900/50 px-3 py-1.5 rounded-lg transition">
+                                    Delete
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                {% else %}
+                    <p class="text-xs text-slate-500 py-2">No properties added yet.</p>
+                {% endfor %}
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Edit Property Modal -->
+    <div id="editPropertyModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 w-full max-w-md shadow-xl">
+            <h3 class="text-lg font-bold text-white mb-4">Edit / Rename Property</h3>
+            
+            <form id="editPropertyForm" method="POST" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">Property Name</label>
+                    <input type="text" id="editPropName" name="name" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-blue-600 transition">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">Address / Location</label>
+                    <input type="text" id="editPropAddress" name="address" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-blue-600 transition">
+                </div>
+
+                <div class="flex items-center justify-end gap-3 pt-2">
+                    <button type="button" onclick="closeEditPropertyModal()" class="text-xs text-slate-400 hover:text-white px-4 py-2 transition">
+                        Cancel
+                    </button>
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-4 py-2 rounded-lg shadow-lg shadow-blue-600/20 transition">
+                        Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+    function openEditPropertyModal(id, name, address) {
+        document.getElementById('editPropertyForm').action = '/property/' + id + '/edit';
+        document.getElementById('editPropName').value = name;
+        document.getElementById('editPropAddress').value = address;
+        document.getElementById('editPropertyModal').classList.remove('hidden');
+    }
+
+    function closeEditPropertyModal() {
+        document.getElementById('editPropertyModal').classList.add('hidden');
+    }
+    </script>
+
+</body>
+</html>
