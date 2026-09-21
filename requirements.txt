@@ -4,3 +4,4 @@ sqlalchemy
 gunicorn
 bcrypt
 jinja2
+python-dotenv
